@@ -7,6 +7,8 @@ class Enemy
     private:
         Texture *texture;
         Sprite sprite;
+        Vector2u windowBounds;
+        Vector2f direction;
 
         int type;
         int hp;
