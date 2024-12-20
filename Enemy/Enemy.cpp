@@ -10,12 +10,13 @@ Enemy::Enemy(Texture *texture, Vector2u windowBounds,
     this-> texture = texture;
     this->sprite.setTexture(*this->texture);
     this->sprite.setScale(scale);
+    this-> direction = direction;
 
     this->sprite.setPosition(windowBounds.x, (rand()%windowBounds.y) - this->sprite.getGlobalBounds().height);
 
     this-> type = type;
     this-> hpMax = hpMax;
-    this-> hp = hp;
+    this-> hp = this->hpMax;
     this-> damageMax =  damageMax;
     this-> damageMin = damageMin;
 }
@@ -39,7 +40,7 @@ void Enemy::Update()
     switch (this->type)
     {
     case 0:
-        this->sprite.move(-10.f,0.f);
+        this->sprite.move(this->direction.x * 10.f,this->direction.y * 10.f);
         break;
     default:
         break;
