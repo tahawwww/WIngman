@@ -8,6 +8,7 @@
 #include <SFML/Window.hpp>
 #include <vector>
 #include "Enemy.h"
+#include "Explosion.h"
 
 
 using namespace sf;
@@ -20,6 +21,10 @@ class Game
         // Wallpaper
         Texture wallpaperTexture;
         Sprite wallpaperSprite;
+
+        //Audio
+        Music backgroundMusic;
+        Music gameOverAudio;
 
         // Text
         Font font;
@@ -37,6 +42,11 @@ class Game
         std::vector<Enemy> enemiesSaved;
         int enemySpawnTimerMax;
         int enemySpawnTimer;
+
+        //Explosion
+        std::vector<Explosion> playerExplosions;
+        std::vector<Explosion> enemyExplosions;
+        std::vector<Texture> explosionTextures;
 
         //Textures
         std::vector<Texture> textures;
