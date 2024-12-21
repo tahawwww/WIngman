@@ -7,6 +7,7 @@ Enemy::Enemy(Texture *texture, Vector2u windowBounds,
              Vector2f scale, int type,
              int hpMax, int damageMax, int damageMin)
 {
+
     this-> texture = texture;
     this->sprite.setTexture(*this->texture);
     this->sprite.setScale(scale);
