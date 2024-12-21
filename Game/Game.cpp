@@ -1,11 +1,12 @@
 #include "Player.h"
 #include "Enemy.h"
+#include "Explosion.h"
 
 using namespace std;
 using namespace sf;
 
 
-enum textures {player = 0, laser01 ,missile01, mainGun01, enemy01};
+enum textures {player = 0, laser01 ,missile01, mainGun01, enemy01, bigEnemy, fastEnemy, meme01,meme02};
 
 Game::Game(RenderWindow *window)
 {
@@ -25,6 +26,29 @@ Game::Game(RenderWindow *window)
             static_cast<float>(windowSize.y) / textureSize.y
             );
 
+    // Audio
+    this->backgroundMusic.openFromFile("Textures/bg_music.wav");
+    this->backgroundMusic.setLoop(true);
+    this->backgroundMusic.setVolume(10);
+    this->backgroundMusic.play();
+
+    this->gameOverAudio.openFromFile("Textures/game_over.wav");
+    this->gameOverAudio.setVolume(70);
+
+    Texture enemyExplosionTexture;
+    if (enemyExplosionTexture.loadFromFile("Textures/explosion_1.png"))
+    {
+        this->explosionTextures.push_back(enemyExplosionTexture); // Texture for enemy explosions
+    }
+    else { std::cerr << "Failed to load enemy explosion texture!" << std::endl; }
+
+    Texture playerExplosionTexture;
+    if (playerExplosionTexture.loadFromFile("Textures/explosion_4.png"))
+    {
+        this->explosionTextures.push_back(playerExplosionTexture); // Texture for player explosions
+    }
+    else { std::cerr << "Failed to load player explosion texture!" << std::endl; }
+
     // Initialize textures
     this->textures.push_back(Texture());
     this->textures[player].loadFromFile("Textures/ship_3.png");
@@ -36,17 +60,24 @@ Game::Game(RenderWindow *window)
     this->textures[mainGun01].loadFromFile("Textures/gun_4.png");
     this->textures.push_back(Texture());
     this->textures[enemy01].loadFromFile("Textures/enemy.png");
-
+    this->textures.push_back(Texture());
+    this->textures[bigEnemy].loadFromFile("Textures/enemy_2.png");
+    this->textures.push_back(Texture());
+    this->textures[fastEnemy].loadFromFile("Textures/enemy_4.png");
+    this->textures.push_back(Texture());
+    this->textures[meme01].loadFromFile("Textures/Anss.png");
+    this->textures.push_back(Texture());
+    this->textures[meme02].loadFromFile("Textures/Ali.png");
 
     // Initialize player
     this->players.push_back(Player(this->textures));
-    //this->players.push_back(Player(this->textures,Keyboard::I,Keyboard::K,Keyboard::J,Keyboard::L,Keyboard::RShift));
+    this->players.push_back(Player(this->textures,Keyboard::I,Keyboard::K,Keyboard::J,Keyboard::L,Keyboard::RShift));
     this->playersAlive = this->players.size();
 
     // Initialize Enemies
     Enemy e1(&this->textures[enemy01], this->window->getSize(),
                             Vector2f(0.f,0.f), Vector2f(-1.f,0.f), Vector2f(0.1f,0.1f),
-                            0, rand()%3 +1 , 3, 1);
+                            0, rand()%3 +1 , 2, 1);
 
     this->enemiesSaved.push_back(Enemy(e1));
     this-> enemySpawnTimerMax =45;
@@ -56,6 +87,7 @@ Game::Game(RenderWindow *window)
 }
 Game::~Game()
 {
+    cout<<"game stooped";
 }
 void Game:: InitUI()
 {
@@ -118,9 +150,38 @@ void Game::Update()
         // Spawn Enemies
         if(this->enemySpawnTimer >= this-> enemySpawnTimerMax)
         {
-            this->enemies.push_back(Enemy(&this->textures[enemy01], this->window->getSize(),
-                                    Vector2f(0.f,0.f), Vector2f(-1.f,0.f), Vector2f(0.4f,0.4f),
-                                    0, rand()%3 +1 , 2, 1));
+            int spawnChance = rand() % 100;
+
+            if(spawnChance<10)
+            {
+                std::cout << "Spawning big enemy" << std::endl;
+                // Spawn a big enemy
+                this->enemies.push_back(Enemy(&this->textures[bigEnemy], this->window->getSize(),Vector2f(0.f, 0.f),
+                                              Vector2f(-0.5f, 0.f), Vector2f(0.4f, 0.4f),0, 7, 7, 5));
+            }
+            else if (spawnChance >= 10 && spawnChance < 40)
+            {
+                std::cout << "Spawning fast enemy" << std::endl;
+                // Spawn a fast enemy
+                this->enemies.push_back(Enemy(&this->textures[fastEnemy], this->window->getSize(),Vector2f(0.f, 0.f),
+                                              Vector2f(-1.5f, 0.f), Vector2f(0.2f, 0.2f),0, 1, 1, 1));
+            }
+            else if (spawnChance <=43 &&  spawnChance >= 41 )
+            {
+                this->enemies.push_back(Enemy(&this->textures[meme01], this->window->getSize(),Vector2f(0.f, 0.f),
+                                              Vector2f(-0.5f, 0.f), Vector2f(0.8f, 0.8f),0, 100, 10, 10));
+            }
+            else if (spawnChance <=46 &&  spawnChance >= 44 )
+            {
+                this->enemies.push_back(Enemy(&this->textures[meme02], this->window->getSize(),Vector2f(0.f, 0.f),
+                                              Vector2f(-0.4f, 0.f), Vector2f(0.8f,0.8f),0, 100, 10, 10));
+            }
+            else
+            {
+                std::cout << "Spawning regular enemy" << std::endl;
+                 this->enemies.push_back(Enemy(&this->textures[enemy01], this->window->getSize(),Vector2f(0.f,0.f),
+                                                Vector2f(-1.f,0.f), Vector2f(0.4f,0.4f),0,rand()%3+1, 2, 1));
+            }
 
 
             this-> enemySpawnTimer = 0; // Reset Timer
@@ -151,6 +212,8 @@ void Game::Update()
                         }
                         if(this->enemies[j].getHP() <= 0)
                         {
+                            // Create an explosion at the enemy's position
+                            this->enemyExplosions.emplace_back(this->explosionTextures[0], this->enemies[j].getPosition(),Vector2f(0.06f,0.06f),0.2f,0.2f);
                             this->enemies.erase(this->enemies.begin() + j);
                         }
 
@@ -170,6 +233,32 @@ void Game::Update()
                 }
             }
         }
+        //Update Player Explosion
+        for (size_t i = 0; i < this->playerExplosions.size();i++)
+        {
+            this->playerExplosions[i].Update();
+            if (this->playerExplosions[i].isFinished())
+            {
+                this->playerExplosions.erase(playerExplosions.begin() + i); // Remove player Explosion
+            }
+             else
+            {
+                ++i; // Only increment if we didn't erase
+            }
+        }
+        // Update enemy explosions
+        for (size_t i = 0; i < this->enemyExplosions.size();)
+        {
+            this->enemyExplosions[i].Update();
+            if (this->enemyExplosions[i].isFinished())
+            {
+                this->enemyExplosions.erase(enemyExplosions.begin() + i); // Remove finished explosions
+            }
+            else
+            {
+                ++i; // Only increment if we didn't erase
+            }
+        }
         // Update Enemies
         for(size_t i=0; i < this->enemies.size(); i++)
         {
@@ -183,11 +272,22 @@ void Game::Update()
 
                         if(!this->players[k].isAlive())
                         {
+                            if(this->players[k].getHP() <= 0)
+                            {
+                                this->playerExplosions.emplace_back(this->explosionTextures[1],this->players[k].getPosition(),Vector2f(0.1f,0.1f), 0.4f,1.f);
+                            }
                             this->players.erase(this->players.begin() + k);
                             this->followPlayerTexts.erase(this->followPlayerTexts.begin() + k);
                             this->playersAlive--;
-                            //return;
+                            if(playersAlive==0)
+                            {
+                                this->backgroundMusic.stop();
+                                this->gameOverAudio.play();
+                                break;
+                            }
+                            return;
                         }
+
                         this->enemies.erase(this->enemies.begin() + i);
                         return;
                     }
@@ -239,6 +339,17 @@ void Game::Draw()
         this->enemies[i].Draw(*this->window);
         this->window->draw(this->enemyText);
     }
+    // Draw player explosions
+    for (size_t i = 0; i < this->playerExplosions.size(); ++i)
+    {
+        this->playerExplosions[i].Draw(*this->window);
+    }
+    // Draw explosions
+    for (size_t i = 0; i < this->enemyExplosions.size(); ++i)
+    {
+        this->enemyExplosions[i].Draw(*this->window);
+    }
+
     this-> DrawUI();
     this->window->display();
 }
