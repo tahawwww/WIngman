@@ -26,6 +26,10 @@ class Player
         Sprite sprite;
         RectangleShape hitbox;
 
+        // Audio
+        SoundBuffer laserSound;
+        Sound laser;
+
         // Accessories
         Sprite mainGunSprite;
         std::vector<Bullet> bullets;
@@ -60,6 +64,7 @@ class Player
         int score;
 
     public:
+
         Player(std::vector<Texture> &textures,
                int UP=22,int DOWN=18,
                 int LEFT=0,int RIGHT=3,
@@ -74,6 +79,10 @@ class Player
         inline Vector2f getPosition() const
         {
             return this->sprite.getPosition();
+        }
+        void setPosition(float x, float y)
+        {
+            return this->sprite.setPosition(x,y);
         }
         inline const String getHpAsString() const
         {
