@@ -60,6 +60,14 @@ Player::Player(std::vector<Texture> &textures,
     this->playerNr=Player::players;
     Player::players++;
 
+    this->laser = this->laser;
+    if (!this->laserSound.loadFromFile("Textures/laser.wav"))
+    { std::cerr << "Failed to load laser sound!" << std::endl; }
+    else { std::cout << "Laser sound loaded successfully!" << std::endl; }
+
+    this->laser.setBuffer(this->laserSound);
+    this->laser.setVolume(20);
+
 
 }
 
@@ -83,7 +91,7 @@ void Player::UpdateAccessories()
 }
 Player::~Player()
 {
-
+    std::cout << "Player destroyed!" << std::endl;
 }
 void Player ::Movement()
 {
@@ -172,6 +180,7 @@ void Player::Combat()
     if(Keyboard::isKeyPressed(Keyboard::Key(this-> controls[controls::SHOOT]))
        && this->shootTimer >= this->shootTimerMax)
     {
+        std::cout << "Shoot key is pressed!" << std::endl;
         if(this->currentWeapon==LASER)
         {
             // Create Bullet
@@ -182,6 +191,7 @@ void Player::Combat()
                                     Vector2f(0.12f,0.12f),
                                     Vector2f(1.f,0.f),
                                     20.f, 60.f, 3.f));
+
             }
             else if(this->mainGunLevel==1)
             {
@@ -201,35 +211,13 @@ void Player::Combat()
             }
             // Animate gun
             this->mainGunSprite.move(-30.f,0.f);
+            // play laser
+            std::cout << "Stopping laser sound if playing..." << std::endl; this->laser.stop();
+            this->laser.stop();
+            cout << "sound about to come" <<endl;
+            this->laser.play();
+            cout << "Status: " << laser.getStatus() << endl;
         }
-        else if(this->currentWeapon==MISSILE01)
-        {
-            // Create Bullet
-            this->bullets.push_back(Bullet(missile01Texture,
-                                    Vector2f(this->playerCenter.x + 35.f ,this->playerCenter.y -25.f),
-                                    Vector2f(0.12f,0.12f),
-                                    Vector2f(1.f,0.f),
-                                    2.f, 50.f, 1.f));
-            if(this->dualMissiles01)
-            {
-                this->bullets.push_back(Bullet(missile01Texture,
-                                    Vector2f(this->playerCenter.x + 35.f ,this->playerCenter.y +25.f),
-                                    Vector2f(0.12f,0.12f),
-                                    Vector2f(1.f,0.f),
-                                    2.f, 50.f, 1.f));
-            }
-            // Animate gun
-            this->mainGunSprite.move(-30.f,0.f);
-        }
-        else if(this->currentWeapon==MISSILE02)
-        {
-            if(this->dualMissiles02)
-            {
-
-            }
-        }
-
-
         this-> shootTimer = 0; //Reset Timer
     }
 }
@@ -248,6 +236,17 @@ void Player::Update(Vector2u WindowBounds)
     this->Movement();
     this-> UpdateAccessories();
     this->Combat();
+
+    // Boundary check for the player
+    if (this->getPosition().x < 0)
+        this->setPosition(0, this->getPosition().y);
+    if (this->getPosition().x + this->getGlobalBounds().width > WindowBounds.x)
+        this->setPosition(WindowBounds.x - this->getGlobalBounds().width, this->getPosition().y);
+    if (this->getPosition().y < 0)
+        this->setPosition(this->getPosition().x, 0);
+    if (this->getPosition().y + this->getGlobalBounds().height > WindowBounds.y)
+        this->setPosition(this->getPosition().x, WindowBounds.y - this->getGlobalBounds().height);
+
 }
 void Player::Draw(RenderTarget &target)
 {
@@ -258,3 +257,4 @@ void Player::Draw(RenderTarget &target)
     target.draw(this->mainGunSprite);
     target.draw(this->sprite);
 }
+
